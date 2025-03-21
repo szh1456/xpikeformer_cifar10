@@ -6,7 +6,6 @@ from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 from spikingjelly.activation_based import layer, neuron, functional
 from timm.models.layers import to_2tuple, trunc_normal_, DropPath
-from .bneuron import Bernoulli_neuron
 
 def pair(t):
     return t if isinstance(t, tuple) else (t, t)
