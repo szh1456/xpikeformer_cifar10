@@ -149,11 +149,11 @@ class TransformerAttention(nn.Module):
         self.c_bn = nn.BatchNorm1d(3 * self.embed_dim)
         self.c_attn_lif = neuron.LIFNode(tau=2., decay_input=False, v_threshold=1., step_mode='m',backend='cupy')
         'pre_train with standard LIF or IF'
-        self.attn_weight_lif = neuron.LIFNode(tau=1.1, decay_input=False, v_threshold=0.5, step_mode='m',backend='cupy')
-        self.attn_output_lif = neuron.LIFNode(tau=1.1, decay_input=False, v_threshold=0.5, step_mode='m',backend='cupy')
+        # self.attn_weight_lif = neuron.LIFNode(tau=1.1, decay_input=False, v_threshold=0.5, step_mode='m',backend='cupy')
+        # self.attn_output_lif = neuron.LIFNode(tau=1.1, decay_input=False, v_threshold=0.5, step_mode='m',backend='cupy')
         'fine tune with Bernoulli_neuron'
-        self.attn_weight_lif = Bernoulli_neuron(step_mode='m',backend='cupy')
-        self.attn_output_lif = Bernoulli_neuron(step_mode='m',backend='cupy')
+        # self.attn_weight_lif = Bernoulli_neuron(step_mode='m',backend='cupy',v_reset=None)
+        # self.attn_output_lif = Bernoulli_neuron(step_mode='m',backend='cupy',v_reset=None)
 
         self.attn_dropout = layer.Dropout(attn_pdrop, step_mode='m')
         self.resid_dropout = layer.Dropout(resid_pdrop, step_mode='m')
@@ -161,13 +161,13 @@ class TransformerAttention(nn.Module):
         self.attn_output_bn = nn.BatchNorm1d(self.embed_dim)
 
     def _attn(self, query, key, value):
-        attn_weights = torch.matmul(query, key.transpose(-1, -2)) 
-        # attn_weights = (torch.sum(query.unsqueeze(4) * key.unsqueeze(3), dim=-1)) # Equivalent realization but slow down computation, deprecated
-        attn_weights = self.attn_weight_lif(attn_weights)
+        t,bs,nh,l_seq,head_dim = query.shape
+        attn_weights = torch.matmul(query, key.transpose(-1, -2))  #(t,bs,nh,l_seq,head_dim)
+        attn_weights = torch.bernoulli((attn_weights/16).clamp(0.,1.))
         mask_value = torch.tensor(.0, dtype=attn_weights.dtype).to(attn_weights.device)
         attn_weights = torch.where(self.self_mask, attn_weights.to(attn_weights.dtype), mask_value)
         attn_output = torch.matmul(attn_weights, value)
-        # attn_output = (torch.sum(attn_weights.unsqueeze(5) * value.unsqueeze(3), dim=-2)) # Equivalent realization but slow down computation, deprecated
+        attn_output = torch.bernoulli((attn_output/16).clamp(0.,1.))
         return attn_output
 
     def _split_heads(self, tensor, n_head, attn_head_size):
@@ -201,11 +201,8 @@ class TransformerAttention(nn.Module):
         value = self._split_heads(value, self.n_head, self.head_dim)
         attn_output = self._attn(query, key, value)
         attn_output = self._merge_heads(attn_output, self.n_head, self.head_dim)
-
         attn_output = self.attn_output_bn(attn_output.flatten(0,1).transpose(-1,-2)).transpose(-1, -2).reshape(T, B, N, D).contiguous()
         attn_output = self.attn_output_linear(attn_output)
-        
-        attn_output = self.attn_output_lif(attn_output)
         return attn_output
 
 
