@@ -148,8 +148,8 @@ class TransformerAttention(nn.Module):
         self.c_bn = nn.BatchNorm1d(3 * self.embed_dim)
         self.c_attn_lif = neuron.LIFNode(tau=2., decay_input=False, v_threshold=1., step_mode='m',backend='torch')
         'pre_train with standard LIF or IF'
-        # self.attn_weight_lif = neuron.LIFNode(tau=1.1, decay_input=False, v_threshold=0.5, step_mode='m',backend='torch')
-        # self.attn_output_lif = neuron.LIFNode(tau=1.1, decay_input=False, v_threshold=0.5, step_mode='m',backend='torch')
+        self.attn_weight_lif = neuron.LIFNode(tau=1.1, decay_input=False, v_threshold=0.5, step_mode='m',backend='torch')
+        self.attn_output_lif = neuron.LIFNode(tau=1.1, decay_input=False, v_threshold=0.5, step_mode='m',backend='torch')
         'fine tune with Bernoulli_neuron'
         # self.attn_weight_lif = Bernoulli_neuron(step_mode='m',backend='torch',v_reset=None)
         # self.attn_output_lif = Bernoulli_neuron(step_mode='m',backend='torch',v_reset=None)
@@ -162,11 +162,11 @@ class TransformerAttention(nn.Module):
     def _attn(self, query, key, value):
         t,bs,nh,l_seq,head_dim = query.shape
         attn_weights = torch.matmul(query, key.transpose(-1, -2))  #(t,bs,nh,l_seq,head_dim)
-        attn_weights = torch.bernoulli((attn_weights/16).clamp(0.,1.))
+        attn_weights = self.attn_weight_lif(attn_weights)
         mask_value = torch.tensor(.0, dtype=attn_weights.dtype).to(attn_weights.device)
         attn_weights = torch.where(self.self_mask, attn_weights.to(attn_weights.dtype), mask_value)
         attn_output = torch.matmul(attn_weights, value)
-        attn_output = torch.bernoulli((attn_output/16).clamp(0.,1.))
+        attn_output = self.attn_output_lif(attn_output)
         return attn_output
 
     def _split_heads(self, tensor, n_head, attn_head_size):
