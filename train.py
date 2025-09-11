@@ -16,10 +16,13 @@ import time
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
+    is_cuda = True
 elif getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
     device = torch.device("mps")
+    is_cuda = False
 else:
     device = torch.device("cpu")
+    is_cuda = False
 print(device)
 
 args = parameter_reading()
@@ -59,7 +62,7 @@ def save_model(model):
 def trainnetwork(model, args, trainloader, testloader):
     seed_everything(0)
     enable_scaler = not args.analog # AIHWKIT does not support mix-precison training
-    scaler = torch.cpu.amp.GradScaler(enabled=enable_scaler)
+    scaler = torch.amp.GradScaler('cuda' if is_cuda else 'cpu', enabled=enable_scaler)
     if args.analog:
         optimizer = optim.Adam(model.parameters(), lr=args.lr)
         optimizer.regroup_param_groups(model)
