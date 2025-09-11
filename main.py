@@ -1,18 +1,19 @@
 from parameters import parameter_reading
-from models.build_model import build_model, load_model, convert_model
+from models.build_model import build_model, load_model
 from prepare_data import load_data
 import os
 import time
 import torch
 
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 args = parameter_reading()
 time_start = time.time()
 
 model = build_model(args)
 if args.analog:
+    from models.build_model import convert_model
     model = convert_model(model,args,rpu='pcm')
     model = load_model(model,args,analog=True)
 else:

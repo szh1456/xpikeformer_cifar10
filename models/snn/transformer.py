@@ -95,7 +95,7 @@ class TransformerBackbone(nn.Module):
         self.n_positions = n_positions
 
         self.pos_embedding = nn.Embedding(n_positions, self.embd_dim)
-        self.embedding_lif = neuron.LIFNode(tau=2., decay_input=False, v_threshold=1., step_mode='m',backend='cupy')
+        self.embedding_lif = neuron.LIFNode(tau=2., decay_input=False, v_threshold=1., step_mode='m',backend='torch')
         self.dropout = layer.Dropout(embd_pdrop, step_mode='m')
 
         self.h = nn.ModuleList(
@@ -146,13 +146,13 @@ class TransformerAttention(nn.Module):
 
         self.c_attn = nn.Linear(self.embed_dim, 3 * self.embed_dim, bias=False)
         self.c_bn = nn.BatchNorm1d(3 * self.embed_dim)
-        self.c_attn_lif = neuron.LIFNode(tau=2., decay_input=False, v_threshold=1., step_mode='m',backend='cupy')
+        self.c_attn_lif = neuron.LIFNode(tau=2., decay_input=False, v_threshold=1., step_mode='m',backend='torch')
         'pre_train with standard LIF or IF'
-        # self.attn_weight_lif = neuron.LIFNode(tau=1.1, decay_input=False, v_threshold=0.5, step_mode='m',backend='cupy')
-        # self.attn_output_lif = neuron.LIFNode(tau=1.1, decay_input=False, v_threshold=0.5, step_mode='m',backend='cupy')
+        # self.attn_weight_lif = neuron.LIFNode(tau=1.1, decay_input=False, v_threshold=0.5, step_mode='m',backend='torch')
+        # self.attn_output_lif = neuron.LIFNode(tau=1.1, decay_input=False, v_threshold=0.5, step_mode='m',backend='torch')
         'fine tune with Bernoulli_neuron'
-        # self.attn_weight_lif = Bernoulli_neuron(step_mode='m',backend='cupy',v_reset=None)
-        # self.attn_output_lif = Bernoulli_neuron(step_mode='m',backend='cupy',v_reset=None)
+        # self.attn_weight_lif = Bernoulli_neuron(step_mode='m',backend='torch',v_reset=None)
+        # self.attn_output_lif = Bernoulli_neuron(step_mode='m',backend='torch',v_reset=None)
 
         self.attn_dropout = layer.Dropout(attn_pdrop, step_mode='m')
         self.resid_dropout = layer.Dropout(resid_pdrop, step_mode='m')
@@ -211,7 +211,7 @@ class TransformerFeedForward(nn.Module):
         embed_dim = hidden_dim
         intermediate_dim = 4 * hidden_dim
         self.fc = nn.Linear(embed_dim, intermediate_dim, bias=False)
-        self.act = neuron.LIFNode(tau=1.2, decay_input=False, v_threshold=1., step_mode='m',backend='cupy')
+        self.act = neuron.LIFNode(tau=1.2, decay_input=False, v_threshold=1., step_mode='m',backend='torch')
         self.proj = nn.Linear(intermediate_dim, embed_dim, bias=False)
         self.ln = nn.LayerNorm(embed_dim)
         self.dropout = layer.Dropout(ff_pdrop, step_mode='m')
@@ -235,25 +235,25 @@ class SPS(nn.Module):
         self.num_patches = self.H * self.W
         self.proj_conv = nn.Conv2d(in_channels, embed_dims//8, kernel_size=3, stride=1, padding=1, bias=False)
         self.proj_bn = nn.BatchNorm2d(embed_dims//8)
-        self.proj_lif = neuron.LIFNode(tau=2.0, detach_reset=True, backend='cupy', step_mode='m')
+        self.proj_lif = neuron.LIFNode(tau=2.0, detach_reset=True, backend='torch', step_mode='m')
 
         self.proj_conv1 = nn.Conv2d(embed_dims//8, embed_dims//4, kernel_size=3, stride=1, padding=1, bias=False)
         self.proj_bn1 = nn.BatchNorm2d(embed_dims//4)
-        self.proj_lif1 = neuron.LIFNode(tau=2.0, detach_reset=True, backend='cupy', step_mode='m')
+        self.proj_lif1 = neuron.LIFNode(tau=2.0, detach_reset=True, backend='torch', step_mode='m')
 
         self.proj_conv2 = nn.Conv2d(embed_dims//4, embed_dims//2, kernel_size=3, stride=1, padding=1, bias=False)
         self.proj_bn2 = nn.BatchNorm2d(embed_dims//2)
-        self.proj_lif2 = neuron.LIFNode(tau=2.0, detach_reset=True, backend='cupy', step_mode='m')
+        self.proj_lif2 = neuron.LIFNode(tau=2.0, detach_reset=True, backend='torch', step_mode='m')
         self.maxpool2 = torch.nn.MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)
 
         self.proj_conv3 = nn.Conv2d(embed_dims//2, embed_dims, kernel_size=3, stride=1, padding=1, bias=False)
         self.proj_bn3 = nn.BatchNorm2d(embed_dims)
-        self.proj_lif3 = neuron.LIFNode(tau=2.0, detach_reset=True, backend='cupy', step_mode='m')
+        self.proj_lif3 = neuron.LIFNode(tau=2.0, detach_reset=True, backend='torch', step_mode='m')
         self.maxpool3 = torch.nn.MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)
 
         self.rpe_conv = nn.Conv2d(embed_dims, embed_dims, kernel_size=3, stride=1, padding=1, bias=False)
         self.rpe_bn = nn.BatchNorm2d(embed_dims)
-        self.rpe_lif = neuron.LIFNode(tau=2.0, detach_reset=True, backend='cupy', step_mode='m')
+        self.rpe_lif = neuron.LIFNode(tau=2.0, detach_reset=True, backend='torch', step_mode='m')
 
     def forward(self, x):
         # (t, b, c, h, w)

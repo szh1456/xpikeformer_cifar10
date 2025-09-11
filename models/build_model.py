@@ -1,7 +1,6 @@
 import torch
 import os
-from models.get_rpu import get_rpu
-from aihwkit.nn.conversion import convert_to_analog
+
 
 def build_model(args):
     model_name = args.net
@@ -110,6 +109,8 @@ def _swap_words(s, A, B):
     return s
 
 def convert_model(model,args,rpu='pcm'):
+    from models.get_rpu import get_rpu
+    from aihwkit.nn.conversion import convert_to_analog
     rpu_config = get_rpu(rpu)
     model = convert_to_analog(model,rpu_config)
     return model

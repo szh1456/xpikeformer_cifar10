@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from parameters import parameter_reading
-from aihwkit.optim import AnalogAdam
+# from aihwkit.optim import AnalogAdam
 
 from models.snn.utils import spike_coding, reset_net
 from utils.utils import seed_everything
@@ -12,11 +12,20 @@ from utils.utils import seed_everything
 import time
 
 
+
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+elif getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+    device = torch.device("mps")
+else:
+    device = torch.device("cpu")
+print(device)
+
 args = parameter_reading()
 
 def train_step(model, inputs, targets, optimizer, scaler, loss_func):
     model.train()
-    with torch.cuda.amp.autocast(enabled=True):
+    with torch.autocast(device_type=device.type):
         outputs = model(inputs)
         loss = loss_func(outputs, targets)
     scaler.scale(loss).backward()
@@ -46,11 +55,10 @@ def save_model(model):
 
 def trainnetwork(model, args, trainloader, testloader):
     seed_everything(0)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     enable_scaler = not args.analog # AIHWKIT does not support mix-precison training
-    scaler = torch.cuda.amp.GradScaler(enabled=enable_scaler)
+    scaler = torch.cpu.amp.GradScaler(enabled=enable_scaler)
     if args.analog:
-        optimizer = AnalogAdam(model.parameters(), lr=args.lr)
+        optimizer = optim.Adam(model.parameters(), lr=args.lr)
         optimizer.regroup_param_groups(model)
     else:
         optimizer = optim.AdamW(model.parameters(), lr=args.lr)
