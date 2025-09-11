@@ -1,3 +1,4 @@
+import os
 import torch
 
 import torch.nn as nn
@@ -44,11 +45,13 @@ def val_step(model, inputs, targets, loss_func):
     return loss.detach().item(),total,correct
 
 def save_model(model):
-    folder_path = f'./model_parameters/{"analog/" if args.analog else ""}'
+    folder_path = f'./model_parameters{"/analog" if args.analog else ""}'
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path) 
     if args.paradigm != 'ann':
-        path = f"{folder_path}{args.paradigm}_{args.net}_{args.encoding}.pth"
+        path = f"{folder_path}/{args.paradigm}_{args.net}_{args.encoding}.pth"
     else:
-        path = f"{folder_path}{args.paradigm}_{args.net}.pth"
+        path = f"{folder_path}/{args.paradigm}_{args.net}.pth"
     torch.save(model.state_dict(),path)
     print(f'\r Model saved at {path}.')
 
