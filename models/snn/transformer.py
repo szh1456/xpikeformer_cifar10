@@ -67,9 +67,9 @@ class SViT(nn.Module):
         # x = self.dropout(x)
         output = self._backbone(x)
         prediction = self._read_out(output)
-        prediction = torch.mean(prediction, dim=0)
+        # prediction = torch.mean(prediction, dim=0)
         prediction = self.dequant(prediction)
-        return prediction[:, 0, :]
+        return prediction[:, :, 0, :] # [T,bs,num_classes]
 
 class SSPT(nn.Module):
     def __init__(self, *, dim, patch_size, channels = 3):

@@ -1,0 +1,25 @@
+results:
+  save_results: True
+  save_dir_base: "outputs"
+  save_dir: "none"
+  wandb_logging: False
+  tensorboard_logging: False
+  checkpoint_save: False
+  checkpoint_path: "/home/es.aau.dk/fi81zw/prjs/xpikeformer_cifar10/outputs/2025-09-12_145417/cifar10_snn_vit_small.pth" #'none'
+  
+dataset:
+  name: 'cifar10'
+  dir: './dataset'
+
+# training:
+mode: 'train'
+paradigm: 'snn'
+encoding: 'u'
+net: 'vit_small'
+bs: 128
+imsize: 32
+patchsize: 4
+epochs: 300
+lr: 0.0001
+n_timesteps: 4
+analog: False

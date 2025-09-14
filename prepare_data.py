@@ -3,8 +3,6 @@ from torchvision.datasets import CIFAR10
 from torchvision.transforms import v2 
 from torch.utils.data import DataLoader
 
-from parameters import parameter_reading
-
 def load_data(args):
     bs = args.bs
     size = args.imsize
